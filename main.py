@@ -36,12 +36,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(customers_router)
-app.include_router(employees_router)
-app.include_router(products_router)
-app.include_router(branches_router)
-app.include_router(transactions_router)
+# Include routers with /api/v1 prefix
+app.include_router(customers_router, prefix="/api/v1")
+app.include_router(employees_router, prefix="/api/v1")
+app.include_router(products_router, prefix="/api/v1")
+app.include_router(branches_router, prefix="/api/v1")
+app.include_router(transactions_router, prefix="/api/v1")
 
 # Root endpoint
 @app.get("/", tags=["Root"])

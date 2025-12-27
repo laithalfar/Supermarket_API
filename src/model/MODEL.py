@@ -1,7 +1,7 @@
 from datetime import date, time, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Optional, List, ClassVar
+from typing import Optional, List, ClassVar, Any
 import enum
 from dataclasses import dataclass
 from pydantic import (
@@ -22,16 +22,16 @@ class Role(enum.StrEnum):
     STOCKER: ClassVar[str] = "STOCKER"
     CASHIER: ClassVar[str] = "CASHIER"
 
-@dataclass
+
 class Customers(BaseModel):
-    name: constr(min_length=1, max_length=100) = Field(examples=["John Doe", "Jane Doe"], min_length=1, description = "name of customer")
-    age: conint(gt=0, lt=120) = Field(examples=["7", "8"], min_length=1, max_length=2, description = "age of customer")
-    email: EmailStr = Field(examples=["example@gmd.jo"], min_length=1, description = "email address of customer")
-    membership: bool = Field(examples=["True", "False"], min_length=1, description = "customer membership status")
+    name: constr(min_length=1, max_length=100) = Field(examples=["John Doe", "Jane Doe"], description = "name of customer")
+    age: conint(gt=0, lt=120) = Field(examples=["7", "8"], description = "age of customer")
+    email: EmailStr = Field(examples=["example@gmd.jo"], description = "email address of customer")
+    membership: bool = Field(examples=[True, False], description = "customer membership status")
 
 def validate_customer(data: dict):
     try:
-        customer = customers.model_validate(data)
+        customer = Customers.model_validate(data)
         print(customer)
     except ValidationError as e:
         print("Customer invalid")
@@ -39,30 +39,30 @@ def validate_customer(data: dict):
             print(error)
 
 class Employees(BaseModel):
-    name: constr(min_length=1, max_length=100) = Field(examples=["John Doe", "Jane Doe"], min_length=1, description = "name of employee")
-    age: conint(gt=16, lt=70) = Field(examples=["7", "8"], min_length=1, max_length=2, description = "age of employee")
-    dateOfEmployment: date = Field(examples=["2023-01-01", "2023-01-02"], min_length=1, description = "date of employment of employee")
-    dateOfEndOfEmployment: Optional[date] = Field(examples=["2023-01-01", "2023-01-02"], min_length=1, description = "date of the end of employment of an employee which can be empty if employee is stll working")
-    email: EmailStr = Field(examples=["example@gmd.jo"], min_length=1, description = "email address of customer", frozen = True)
-    role: Role = Field(examples=["HEADOFBRANCH", "CASHIER"], min_length=1, description = "role of employee")
+    name: constr(min_length=1, max_length=100) = Field(examples=["John Doe", "Jane Doe"], description = "name of employee")
+    age: conint(gt=16, lt=70) = Field(examples=["7", "8"], description = "age of employee")
+    dateOfEmployment: date = Field(examples=["2023-01-01", "2023-01-02"], description = "date of employment of employee")
+    dateOfEndOfEmployment: Optional[date] = Field(default=None, examples=["2023-01-01", "2023-01-02"], description = "date of the end of employment of an employee which can be empty if employee is stll working")
+    email: EmailStr = Field(examples=["example@gmd.jo"], description = "email address of customer", frozen = True)
+    role: Role = Field(examples=["HEADOFBRANCH", "CASHIER"], description = "role of employee")
 
 def validate_employee(data: dict):
     try:
-        employee = employees.model_validate(data)
+        employee = Employees.model_validate(data)
         print(employee)
     except ValidationError as e:
         print("Customer invalid")
         for error in e.errors():
             print(error)
 
-@dataclass
+
 class Products(BaseModel):
-    name: constr(min_length=1, max_length=100) = Field(examples=["Chicken sandwich", "redbull drink"], min_length=1, description = "Uname of product")
-    stock: conint(ge=0) = Field(examples=["30", "1523"], min_length=1, description = "amount of stock for this product")
-    sellPrice: condecimal(ge=0) = Field(examples=["30.02", "97.00"], min_length=1, description = "selling price of product in Jordanian Dinar for customers")
-    cost: condecimal(ge=0) = Field(examples=["11.20", "40.57"], min_length=1, description = "buying price of product in Jordanian Dinar for supermarket")
-    category_id: int = Field(examples=["1", "2"], min_length=1, description = "Unique id of the category of the product") # Main category (e.g., 1 = Food, 2 = Drinks, etc.)
-    category: constr(min_length=1, max_length=50) = Field(examples=["healthy Food", "energy Drinks"], min_length=1, description = "name of the category of the product") # Subcategory (e.g., "Meat", "Chicken", "Vegetables")
+    name: constr(min_length=1, max_length=100) = Field(examples=["Chicken sandwich", "redbull drink"], description = "Uname of product")
+    stock: conint(ge=0) = Field(examples=["30", "1523"], description = "amount of stock for this product")
+    sellPrice: condecimal(ge=0) = Field(examples=["30.02", "97.00"], description = "selling price of product in Jordanian Dinar for customers")
+    cost: condecimal(ge=0) = Field(examples=["11.20", "40.57"], description = "buying price of product in Jordanian Dinar for supermarket")
+    category_id: constr(max_length=10) = Field(examples=["1", "2"], description = "Unique id of the category of the product") # Main category (e.g., 1 = Food, 2 = Drinks, etc.)
+    category: constr(min_length=1, max_length=50) = Field(examples=["healthy Food", "energy Drinks"], description = "name of the category of the product") # Subcategory (e.g., "Meat", "Chicken", "Vegetables")
 
 def validate_product(data: dict):
     try:
@@ -73,45 +73,46 @@ def validate_product(data: dict):
         for error in e.errors():
             print(error)
 
-@dataclass
+
 class Branches(BaseModel):
-    location: constr(min_length=1, max_length=200) = Field(examples=["Rabieh", "Mecca_street"], min_length=1, description = "location of branch")
-    size: constr(min_length=1, max_length=50) = Field(examples=["big", "small"], min_length=1, description = "size of branch")
-    totalStock: conint(ge=0) = Field(examples=["316", "1523"], min_length=3, description = "total stock of products in branch")
+    name: constr(min_length=1, max_length=100) = Field(examples=["Main Branch", "Airport Branch"], description = "name of branch")
+    location: constr(min_length=1, max_length=255) = Field(examples=["Rabieh", "Mecca_street"], description = "location of branch")
+    size: int = Field(examples=[100, 200], description = "size of branch")
+    total_stock: conint(ge=0) = Field(examples=["316", "1523"], description = "total stock of products in branch")
 
 def validate_branch(data: dict):
     try:
-        branch = Branch.model_validate(data)
+        branch = Branches.model_validate(data)
         print(branch)
     except ValidationError as e:
         print("branch invalid")
         for error in e.errors():
             print(error)
 
-@dataclass
+
 class Transactions(BaseModel):
-    branch_id: int = Field(examples=["1", "2"], min_length=1, description = "id of the branch where the product was sold as a foreign key") ## ForeignKey
-    customer_id: int = Field(examples=["1", "2"], min_length=1, description = "id of the customer that bought the product as a foreign key") # ForeignKey
-    quantity: int = Field(examples=["1", "2"], min_length=1, min_value=1, description = "quantity of products bought in one trtansaction")
-    employee_id: int = Field(examples=["1", "2"], min_length=1, description = "id of the employee that made the transaction as a foreign key") # ForeignKey
-    dateOfTransaction: date = Field(examples=["2023-01-01", "2023-01-02"], min_length=1, description = "date of the transaction")
-    timeOfTransaction: time = Field(examples=["10:00", "21:00"], min_length=1, max_length=4, description = "time of the transaction")
-    total: condecimal(ge=0, decimal_places=2) = Field(examples=["56.92", "30.02"], min_length=1, description = "total price of the transaction")
+    branch_id: int = Field(examples=["1", "2"], description = "id of the branch where the product was sold as a foreign key") ## ForeignKey
+    employee_id: int = Field(examples=["1", "2"], description = "id of the employee that made the transaction as a foreign key") # ForeignKey
+    total_amount: condecimal(ge=0, decimal_places=2) = Field(examples=["56.92", "30.02"], description = "total amount of the transaction")
+    dateOfTransaction: date = Field(examples=["2023-01-01", "2023-01-02"], description = "date of the transaction")
+    timeOfTransaction: Any = Field(examples=["10:00", "21:00"], description = "time of the transaction")
+    total: condecimal(ge=0, decimal_places=2) = Field(examples=["56.92", "30.02"], description = "total price of the transaction")
 
 def validate_transaction(data: dict):
     try:
-        transaction = Transaction.model_validate(data)
+        transaction = Transactions.model_validate(data)
         print(transaction)
     except ValidationError as e:
         print("transaction invalid")
         for error in e.errors():
             print(error)
 
-@dataclass
+
 class TransactionDetails(BaseModel):
-    product_id: int = Field(examples=["1", "2"], min_length=1, description = "id of a product as a foreign key")  # Foreign key to Product
-    quantity: conint(gt=0) = Field(examples=["1", "2"], min_length=1, description = "quantity of a product that was bought")
-    price: condecimal(ge=0, decimal_places=2) = Field(examples=["56.92", "30.02"], min_length=1, description = "selling price of a product at the time of transaction")  # Price at time of purchase
+    transaction_id: Optional[int] = Field(None, description = "id of a transaction as a foreign key")
+    product_id: int = Field(examples=["1", "2"], description = "id of a product as a foreign key")  # Foreign key to Product
+    quantity: conint(gt=0) = Field(examples=["1", "2"], description = "quantity of a product that was bought")
+    price: condecimal(ge=0, decimal_places=2) = Field(examples=["56.92", "30.02"], description = "selling price of a product at the time of transaction")  # Price at time of purchase
 
 def validate_transactionDetails(data: dict):
     try:
@@ -186,38 +187,37 @@ class CustomerInDB(Customers):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class EmployeeInDB(Employees):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ProductInDB(Products):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class BranchInDB(Branches):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TransactionInDB(Transactions):
     id: int
-    created_at: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class TransactionDetailInDB(TransactionDetails):
-    transaction_id: int
+    pass
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 # Response models
 class TransactionResponse(TransactionInDB):

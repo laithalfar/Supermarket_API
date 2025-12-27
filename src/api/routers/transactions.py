@@ -1,14 +1,15 @@
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Optional
 from datetime import date, datetime
 
 from src.model.MODEL import (
     TransactionCreate, TransactionInDB, TransactionResponse,
     TransactionDetailInDB, TransactionDetails
 )
-from CRUD import (
+from src.crud.CRUD import (
     get_transaction, create_transaction,
-    update_transaction, delete_transaction, get_transaction_details
+    update_transaction, delete_transaction, get_transaction_details,
+    get_transactions
 )
 
 # Create router
@@ -23,10 +24,7 @@ async def create_transaction_route(transaction: TransactionCreate):
         details = transaction_data.pop("details", [])
         
         # Create the transaction
-        created_transaction = create_transaction(
-            **transaction_data,
-            details=[detail.dict() for detail in details]
-        )
+        created_transaction = create_transaction(transaction_data)
         return created_transaction
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -36,10 +34,10 @@ async def create_transaction_route(transaction: TransactionCreate):
 async def read_transactions(
     skip: int = 0,
     limit: int = 100,
-    branch_id: int = None,
-    customer_id: int = None,
-    start_date: date = None,
-    end_date: date = None
+    branch_id: Optional[int] = None,
+    customer_id: Optional[int] = None,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
 ):
     try:
         filters = {}
@@ -68,7 +66,7 @@ async def read_transaction(transaction_id: int):
     
     # Create response with details
     response = TransactionResponse(
-        **transaction.dict(),
+        **transaction.model_dump(),
         details=details
     )
     return response

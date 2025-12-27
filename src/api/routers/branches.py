@@ -1,8 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from typing import List
+import os
+import sys
+
+
+
 
 from src.model.MODEL import BranchCreate, BranchInDB, BranchUpdate
-from CRUD import get_branch, create_branch, update_branch, delete_branch
+from src.crud.CRUD import get_branch, create_branch, update_branch, delete_branch
 
 # Create router
 router = APIRouter(prefix="/branches", tags=["branches"])

@@ -1,8 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
 from src.model.MODEL import CustomerCreate, CustomerInDB, CustomerUpdate
-from CRUD import get_customer, create_customer, update_customer, delete_customer
+from src.crud.CRUD import get_customer, create_customer, update_customer, delete_customer
+from src.database import get_db
+from sqlalchemy.orm import Session
+
+
 
 # Create router
 router = APIRouter(prefix="/customers", tags=["customers"]) 

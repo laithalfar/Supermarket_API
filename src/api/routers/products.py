@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException
-from typing import List
+from typing import List, Optional
 from decimal import Decimal
 
 from src.model.MODEL import ProductCreate, ProductInDB, ProductUpdate
-from CRUD import get_product, create_product, update_product, delete_product
+from src.crud.CRUD import get_product, create_product, update_product, delete_product, get_products
 
 # Create router 
 router = APIRouter(prefix="/products", tags=["products"])
@@ -21,9 +21,9 @@ async def create_product_route(product: ProductCreate):
 async def read_products(
     skip: int = 0, 
     limit: int = 100,
-    min_price: float = None,
-    max_price: float = None,
-    category: str = None
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    category: Optional[str] = None
 ):
     try:
         filters = {}
@@ -50,7 +50,7 @@ async def read_product(product_id: int):
 @router.put("/{product_id}", response_model=ProductInDB)
 async def update_product_route(product_id: int, product: ProductUpdate):
     try:
-        updated = update_product(product_id, product.dict(exclude_unset=True))
+        updated = update_product(product_id, product.model_dump(exclude_unset=True))
         if not updated:
             raise HTTPException(status_code=404, detail="Product not found")
         return updated
