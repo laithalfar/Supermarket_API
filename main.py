@@ -1,7 +1,9 @@
-# main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
+import os
 
 # Load environment variables
 load_dotenv()
@@ -43,14 +45,13 @@ app.include_router(products_router, prefix="/api/v1")
 app.include_router(branches_router, prefix="/api/v1")
 app.include_router(transactions_router, prefix="/api/v1")
 
-# Root endpoint
-@app.get("/", tags=["Root"])
+# Serve static files
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+# Root endpoint - Serve Frontend
+@app.get("/", tags=["UI"])
 async def root():
-    return {
-        "message": "Welcome to Supermarket Management System API",
-        "docs": "/api/docs",
-        "redoc": "/api/redoc"
-    }
+    return FileResponse("frontend/index.html")
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])

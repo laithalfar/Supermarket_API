@@ -4,13 +4,16 @@ import os
 import sys
 
 
-
-
 from src.model.MODEL import BranchCreate, BranchInDB, BranchUpdate
-from src.crud.CRUD import get_branch, create_branch, update_branch, delete_branch
+from src.crud.CRUD import get_branch, get_branches, create_branch, update_branch, delete_branch
 
 # Create router
 router = APIRouter(prefix="/branches", tags=["branches"])
+
+# List branches
+@router.get("/", response_model=List[BranchInDB])
+async def list_branches(skip: int = 0, limit: int = 100):
+    return get_branches(skip=skip, limit=limit)
 
 # Create branch
 @router.post("/", response_model=BranchInDB, status_code=201)

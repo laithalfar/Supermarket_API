@@ -1,3 +1,11 @@
+''' 
+CRUD file:
+
+- connection pool and cursor initialization
+
+- create CRUD functions using CRUD functions initialized in the model
+'''
+
 import os
 import logging
 from contextlib import contextmanager
@@ -285,6 +293,18 @@ def get_customer(customer_id: int) -> Any:
     """Get a customer by ID with validation."""
     return execute_read("SELECT * FROM CUSTOMERS WHERE id = %s", (customer_id,), CustomerInDB)
 
+def get_customers(skip: int = 0, limit: int = 100, **filters) -> List[Any]:
+    """Get all customers with filters."""
+    query = "SELECT * FROM CUSTOMERS"
+    params = []
+    if filters:
+        filter_str = " AND ".join([f"{k} = %s" for k in filters.keys()])
+        query += f" WHERE {filter_str}"
+        params = list(filters.values())
+    query += f" LIMIT %s OFFSET %s"
+    params.extend([limit, skip])
+    return execute_read_all(query, tuple(params), CustomerInDB)
+
 def update_customer(customer_id: int, updates: Dict[str, Any]) -> Any:
     """Update customer details and return the updated object."""
     if update_entity("CUSTOMERS", customer_id, updates, CustomerModel):
@@ -339,8 +359,6 @@ def get_products(skip: int = 0, limit: int = 100, **filters) -> List[Any]:
     """Get all products with filters."""
     query = "SELECT * FROM PRODUCTS"
     params = []
-    # Simplified filter handling for demonstration
-    # In a real app, you'd handle __gte, __lte etc.
     if filters:
         filter_parts = []
         for k, v in filters.items():
@@ -381,9 +399,16 @@ def get_branches(skip: int = 0, limit: int = 100, **filters) -> List[Any]:
     query = "SELECT * FROM BRANCHES"
     params = []
     if filters:
-        filter_str = " AND ".join([f"{k} = %s" for k in filters.keys()])
-        query += f" WHERE {filter_str}"
-        params = list(filters.values())
+        filter_parts = []
+        for k, v in filters.items():
+            if k.endswith("__gte"):
+                filter_parts.append(f"{k[:-5]} >= %s")
+            elif k.endswith("__lte"):
+                filter_parts.append(f"{k[:-5]} <= %s")
+            else:
+                filter_parts.append(f"{k} = %s")
+            params.append(v)
+        query += f" WHERE {' AND '.join(filter_parts)}"
     query += f" LIMIT %s OFFSET %s"
     params.extend([limit, skip])
     return execute_read_all(query, tuple(params), BranchInDB)
@@ -398,12 +423,31 @@ def delete_branch(branch_id: int) -> bool:
     """Delete a branch by ID."""
     return delete_entity("BRANCHES", branch_id)
 
-def create_transaction(transaction_data: Dict[str, Any]) -> Any:
-    """Create a new transaction and return the full object."""
-    # Note: Full implementation would handle nested details, 
-    # but for now keeping it compatible with current create_entity logic.
-    transaction_id = create_entity("TRANSACTIONS", transaction_data, TransactionModel)
-    return get_transaction(transaction_id)
+def create_transaction(transaction_data: Dict[str, Any], details: Optional[List[Dict[str, Any]]] = None) -> Any:
+    """Create a new transaction and its details, returning the full object."""
+    try:
+        # Create the parent transaction
+        transaction_id = create_entity("TRANSACTIONS", transaction_data, TransactionModel)
+        
+        # Create transaction details if provided
+        if details:
+            for detail in details:
+                # Add the generated transaction_id to each detail record
+                detail["transaction_id"] = transaction_id
+                # Validate and create detail record
+                # We use a direct execute_write here because create_entity expects a single ID PK,
+                # but TRANSACTION_DETAILS has no separate ID other than transaction_id (which is shared)
+                # Wait, schema shows transaction_id IS the PRIMARY KEY in TRANSACTION_DETAILS... 
+                # that's unusual, but I'll follow it.
+                columns = ', '.join(detail.keys())
+                placeholders = ', '.join(['%s'] * len(detail))
+                query = f"INSERT INTO TRANSACTION_DETAILS ({columns}) VALUES ({placeholders})"
+                execute_write(query, tuple(detail.values()))
+        
+        return get_transaction(transaction_id)
+    except Exception as e:
+        logger.error(f"Failed to create transaction with details: {e}")
+        raise
 
 def get_transaction(transaction_id: int) -> Any:
     """Get a transaction by ID with validation."""
@@ -439,7 +483,7 @@ def delete_transaction(transaction_id: int) -> bool:
     """Delete a transaction by ID."""
     return delete_entity("TRANSACTIONS", transaction_id)
 
-def get_transaction_details(transaction_id: int) -> List[BaseModel]:
+def get_transaction_details(transaction_id: int) -> List[TransactionDetailInDB]:
     """Get transaction details by transaction ID."""
     query = "SELECT * FROM TRANSACTION_DETAILS WHERE transaction_id = %s"
     return execute_read_all(query, (transaction_id,), TransactionDetailInDB)

@@ -1,3 +1,16 @@
+''' 
+- MODEL file with initialization of all BASE models. 
+
+- Each model is initialized with validation using pydantic.
+
+- Create and Update Functions are applied using BASE Model of the tables.
+
+- Database models are made to read from the database.
+
+- These functions and models are for sqlalchemy to communicate with the database once a response is sent from the HTTP.
+
+'''
+
 from datetime import date, time, datetime
 from decimal import Decimal
 from enum import Enum
@@ -91,8 +104,9 @@ def validate_branch(data: dict):
 
 
 class Transactions(BaseModel):
-    branch_id: int = Field(examples=["1", "2"], description = "id of the branch where the product was sold as a foreign key") ## ForeignKey
-    employee_id: int = Field(examples=["1", "2"], description = "id of the employee that made the transaction as a foreign key") # ForeignKey
+    branch_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the branch where the product was sold as a foreign key") ## ForeignKey
+    customer_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the customer who made the purchase as a foreign key") # ForeignKey
+    employee_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the employee that made the transaction as a foreign key") # ForeignKey
     total_amount: condecimal(ge=0, decimal_places=2) = Field(examples=["56.92", "30.02"], description = "total amount of the transaction")
     dateOfTransaction: date = Field(examples=["2023-01-01", "2023-01-02"], description = "date of the transaction")
     timeOfTransaction: Any = Field(examples=["10:00", "21:00"], description = "time of the transaction")
@@ -144,9 +158,6 @@ class ProductCreate(Products):
 class BranchCreate(Branches):
     pass
 
-
-
-# These are classes for creating new models
 class TransactionCreate(Transactions):
     details: List[TransactionDetails] = Field(
         ...,
@@ -181,8 +192,7 @@ class BranchUpdate(Branches):
     size: Optional[constr(min_length=1, max_length=50)] = None
     total_stock: Optional[conint(ge=0)] = None
 
-# Database models (for responses)
-# So these give the structure for databases when we query them
+# Database models made to read from the database 
 class CustomerInDB(Customers):
     id: int
 

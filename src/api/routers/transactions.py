@@ -23,8 +23,8 @@ async def create_transaction_route(transaction: TransactionCreate):
         transaction_data = transaction.model_dump()
         details = transaction_data.pop("details", [])
         
-        # Create the transaction
-        created_transaction = create_transaction(transaction_data)
+        # Create the transaction with details
+        created_transaction = create_transaction(transaction_data, details)
         return created_transaction
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -46,9 +46,9 @@ async def read_transactions(
         if customer_id is not None:
             filters["customer_id"] = customer_id
         if start_date:
-            filters["date__gte"] = start_date
+            filters["dateOfTransaction__gte"] = start_date
         if end_date:
-            filters["date__lte"] = end_date
+            filters["dateOfTransaction__lte"] = end_date
             
         return get_transactions(skip=skip, limit=limit, **filters)
     except Exception as e:
@@ -67,7 +67,7 @@ async def read_transaction(transaction_id: int):
     # Create response with details
     response = TransactionResponse(
         **transaction.model_dump(),
-        details=details
+        details=[TransactionDetailInDB.model_validate(d) for d in details] if isinstance(details, list) else []
     )
     return response
 

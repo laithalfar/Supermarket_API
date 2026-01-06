@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket Vibe Dashboard</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/your-code.js" crossorigin="anonymous"></script>
+    <!-- Placeholder for FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>SuperVibe</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active" data-section="dashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Dashboard</span>
+                    </li>
+                    <li data-section="customers">
+                        <i class="fas fa-users"></i>
+                        <span>Customers</span>
+                    </li>
+                    <li data-section="products">
+                        <i class="fas fa-box"></i>
+                        <span>Inventory</span>
+                    </li>
+                    <li data-section="employees">
+                        <i class="fas fa-id-badge"></i>
+                        <span>Staff</span>
+                    </li>
+                    <li data-section="branches">
+                        <i class="fas fa-store"></i>
+                        <span>Branches</span>
+                    </li>
+                    <li data-section="transactions">
+                        <i class="fas fa-receipt"></i>
+                        <span>Sales</span>
+                    </li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=6366f1&color=fff" alt="User Avatar">
+                    <div class="user-info">
+                        <span class="user-name">Manager</span>
+                        <span class="user-role">Administrator</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search everything...">
+                </div>
+                <div class="top-bar-actions">
+                    <button class="btn-icon"><i class="fas fa-bell"></i><span class="badge"></span></button>
+                    <button class="btn-icon"><i class="fas fa-cog"></i></button>
+                    <button class="btn-primary" id="add-entity-btn">
+                        <i class="fas fa-plus"></i>
+                        <span>New Action</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-body" id="content-area">
+                <!-- Content will be injected here by app.js -->
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Waking up the system...</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for adding/editing -->
+    <div id="modal-container" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">New Customer</h2>
+                <button class="close-modal"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="entity-form" class="modal-body">
+                <!-- Form fields injected by JS -->
+            </form>
+            <div class="modal-footer">
+                <button class="btn-secondary close-modal">Cancel</button>
+                <button class="btn-primary" id="save-entity-btn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification system -->
+    <div id="toast-container"></div>
+
+    <script src="/static/vibe.js?v=3"></script>
+</body>
+
+</html>

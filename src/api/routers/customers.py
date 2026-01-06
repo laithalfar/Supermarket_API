@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
 from src.model.MODEL import CustomerCreate, CustomerInDB, CustomerUpdate
-from src.crud.CRUD import get_customer, create_customer, update_customer, delete_customer
+from src.crud.CRUD import get_customer, get_customers, create_customer, update_customer, delete_customer
 from src.database import get_db
 from sqlalchemy.orm import Session
 
@@ -10,6 +10,11 @@ from sqlalchemy.orm import Session
 
 # Create router
 router = APIRouter(prefix="/customers", tags=["customers"]) 
+
+# List customers
+@router.get("/", response_model=List[CustomerInDB])
+async def list_customers(skip: int = 0, limit: int = 100):
+    return get_customers(skip=skip, limit=limit)
 
 # Create customer
 @router.post("/", response_model=CustomerInDB, status_code=201)

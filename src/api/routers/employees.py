@@ -3,7 +3,7 @@ from typing import List
 from datetime import date
 
 from src.model.MODEL import EmployeeCreate, EmployeeInDB, EmployeeUpdate, Role
-from src.crud.CRUD import get_employee, create_employee, update_employee, delete_employee
+from src.crud.CRUD import get_employee, get_employees, create_employee, update_employee, delete_employee
 
 # Create router
 router = APIRouter(prefix="/employees", tags=["employees"])
