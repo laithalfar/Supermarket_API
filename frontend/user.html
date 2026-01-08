@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperVibe - Shop</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .shop-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .view-section {
+            display: none;
+        }
+
+        .view-section.active {
+            display: block;
+        }
+
+        .branch-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.05);
+            transform: translateY(-3px);
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+        }
+
+        .item-card {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1rem;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .price {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #6366f1;
+            margin: 0.5rem 0;
+        }
+
+        .cart-overlay {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 350px;
+            background: #0f172a;
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            transform: translateX(100%);
+            transition: 0.4s ease;
+            z-index: 1000;
+        }
+
+        .cart-overlay.open {
+            transform: translateX(0);
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 0.5rem;
+        }
+    </style>
+</head>
+
+<body class="dark-theme">
+    <div class="shop-container">
+        <header class="shop-header">
+            <div class="logo" onclick="window.location.href='/'" style="cursor:pointer">
+                <i class="fas fa-shopping-cart"></i>
+                <span style="font-weight:800; font-size:1.5rem">SuperVibe</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-primary" id="cart-btn" style="padding: 0.8rem 1.5rem">
+                    <i class="fas fa-shopping-basket"></i>
+                    <span style="margin-left: 0.5rem">Cart</span>
+                    <span class="badge" id="cart-count"
+                        style="background: white; color: var(--accent-primary); margin-left: 0.5rem">0</span>
+                </button>
+            </div>
+        </header>
+
+        <div id="branch-selection" class="view-section active">
+            <h1 style="margin-bottom: 2rem">Select a Store Branch</h1>
+            <div class="branch-grid" id="branch-list">
+                <!-- Branches load here -->
+            </div>
+        </div>
+
+        <div id="product-selection" class="view-section">
+            <div style="display:flex; align-items:center; gap:1rem; margin-bottom:2rem">
+                <button class="btn-mini" onclick="showView('branch-selection')"><i class="fas fa-arrow-left"></i>
+                    Back</button>
+                <h1 id="current-branch-name">Products</h1>
+            </div>
+            <div class="product-grid" id="product-list">
+                <!-- Products load here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Shop Cart -->
+    <div id="cart-overlay" class="cart-overlay">
+        <div style="display:flex; justify-content:space-between; margin-bottom:2rem">
+            <h2>Your Cart</h2>
+            <button class="btn-icon" id="close-cart"><i class="fas fa-times"></i></button>
+        </div>
+        <div id="cart-items-list" style="max-height: 60vh; overflow-y: auto">
+            <!-- Items -->
+        </div>
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 2px solid rgba(255,255,255,0.1)">
+            <div
+                style="display:flex; justify-content:space-between; font-size:1.4rem; font-weight:800; margin-bottom:2rem">
+                <span>Total</span>
+                <span id="cart-total">$0.00</span>
+            </div>
+            <button class="btn-primary" style="width:100%; padding:1rem" id="checkout-btn">Checkout</button>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script src="/static/user.js?v=1"></script>
+</body>
+
+</html>

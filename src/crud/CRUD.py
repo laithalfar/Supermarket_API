@@ -443,6 +443,20 @@ def create_transaction(transaction_data: Dict[str, Any], details: Optional[List[
                 placeholders = ', '.join(['%s'] * len(detail))
                 query = f"INSERT INTO TRANSACTION_DETAILS ({columns}) VALUES ({placeholders})"
                 execute_write(query, tuple(detail.values()))
+
+                # Update stock level in PRODUCTS table
+                try:
+                    product_id = detail.get("product_id")
+                    quantity = detail.get("quantity", 0)
+                    if product_id and quantity > 0:
+                        # Use GREATEST(0, stock - %s) to prevent negative stock in MySQL
+                        update_stock_query = "UPDATE PRODUCTS SET stock = GREATEST(0, stock - %s) WHERE id = %s"
+                        execute_write(update_stock_query, (quantity, product_id))
+                        logger.info(f"Reduced stock for product {product_id} by {quantity} (Safety check applied)")
+                except Exception as stock_err:
+                    logger.error(f"Failed to update stock for product {detail.get('product_id')}: {stock_err}")
+                    # We don't necessarily want to fail the whole transaction if stock update fails,
+                    # but in a real system we might. For now, just log.
         
         return get_transaction(transaction_id)
     except Exception as e:

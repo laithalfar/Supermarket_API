@@ -1,4 +1,5 @@
 const API_BASE = '/api/v1';
+const toTitleCase = (str) => str ? str.toLowerCase().replace(/(?:^|\s)\w/g, c => c.toUpperCase()) : '-';
 let currentSection = 'dashboard';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,7 +84,7 @@ async function renderDashboard() {
             <div class="stat-card">
                 <div class="stat-header"><i class="fas fa-id-badge"></i> Active Staff</div>
                 <div class="stat-value">${employees.length}</div>
-                <div class="stat-trend"><i class="fas fa-circle"></i> ${employees.length} Staff</div>
+                <div class="stat-trend"><i class="fas fa-circle"></i> Online now</div>
             </div>
         </div>
 
@@ -108,7 +109,7 @@ async function renderDashboard() {
                             <td>#${t.id}</td>
                             <td>Sale</td>
                             <td>$${t.total}</td>
-                            <td>${t.timeOfTransaction || 'Recently'}</td>
+                            <td>${t.timeOfTransaction ? (t.timeOfTransaction.includes('PT') ? t.timeOfTransaction.replace('PT', '').replace('H', 'h').replace('M', 'm') : t.timeOfTransaction.substring(0, 5)) : 'Recently'}</td>
                             <td>
                                 <div class="action-btns">
                                     <button class="btn-mini"><i class="fas fa-eye"></i></button>
@@ -162,6 +163,9 @@ async function renderEntityTable(entity, title) {
                 let val = row[h];
                 if (typeof val === 'boolean') {
                     return `<td><span class="badge ${val ? 'badge-success' : 'badge-warning'}">${val ? 'Yes' : 'No'}</span></td>`;
+                }
+                if (h === 'name' || h === 'location' || h === 'role' || h === 'category') {
+                    val = toTitleCase(val);
                 }
                 return `<td>${val === null ? '-' : val}</td>`;
             }).join('')}

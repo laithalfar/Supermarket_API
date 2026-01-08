@@ -48,10 +48,20 @@ app.include_router(transactions_router, prefix="/api/v1")
 # Serve static files
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
 
-# Root endpoint - Serve Frontend
+# Root endpoint - Serve Login/Role Selection
 @app.get("/", tags=["UI"])
 async def root():
+    return FileResponse("frontend/login.html")
+
+# Admin Dashboard
+@app.get("/admin", tags=["UI"])
+async def admin_panel():
     return FileResponse("frontend/index.html")
+
+# Customer Portal
+@app.get("/shop", tags=["UI"])
+async def shop_portal():
+    return FileResponse("frontend/user.html")
 
 # Health check endpoint
 @app.get("/health", tags=["Health"])
