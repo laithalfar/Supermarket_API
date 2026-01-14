@@ -1,14 +1,18 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 import os
 import sys
 
-
-from src.model.MODEL import BranchCreate, BranchInDB, BranchUpdate
+from src.model.MODEL import BranchCreate, BranchInDB, BranchUpdate, TokenData
 from src.crud.CRUD import get_branch, get_branches, create_branch, update_branch, delete_branch
+from src.utils.security import get_current_user
 
 # Create router
-router = APIRouter(prefix="/branches", tags=["branches"])
+router = APIRouter(
+    prefix="/branches", 
+    tags=["branches"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # List branches
 @router.get("/", response_model=List[BranchInDB])

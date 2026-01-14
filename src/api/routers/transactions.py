@@ -1,19 +1,24 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from datetime import date, datetime
 
 from src.model.MODEL import (
     TransactionCreate, TransactionInDB, TransactionResponse,
-    TransactionDetailInDB, TransactionDetails
+    TransactionDetailInDB, TransactionDetails, TokenData
 )
 from src.crud.CRUD import (
     get_transaction, create_transaction,
     update_transaction, delete_transaction, get_transaction_details,
     get_transactions
 )
+from src.utils.security import get_current_user
 
 # Create router
-router = APIRouter(prefix="/transactions", tags=["transactions"])
+router = APIRouter(
+    prefix="/transactions", 
+    tags=["transactions"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # Create transaction route
 @router.post("/", response_model=TransactionInDB, status_code=201)

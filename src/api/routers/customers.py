@@ -1,15 +1,16 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
-from src.model.MODEL import CustomerCreate, CustomerInDB, CustomerUpdate
+from src.model.MODEL import CustomerCreate, CustomerInDB, CustomerUpdate, TokenData
 from src.crud.CRUD import get_customer, get_customers, create_customer, update_customer, delete_customer
-from src.database import get_db
-from sqlalchemy.orm import Session
-
-
+from src.utils.security import get_current_user
 
 # Create router
-router = APIRouter(prefix="/customers", tags=["customers"]) 
+router = APIRouter(
+    prefix="/customers", 
+    tags=["customers"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # List customers
 @router.get("/", response_model=List[CustomerInDB])

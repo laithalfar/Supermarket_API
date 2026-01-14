@@ -1,26 +1,24 @@
-"""
-Authentication Router Module
-
-This module handles user authentication and registration for both customers and employees.
-
-Security Features:
-- Argon2 password hashing (industry standard)
-- Password strength validation
-- Secure password verification
-"""
-
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends
 from pydantic import BaseModel, EmailStr, Field
 import logging
 from typing import Optional
+from datetime import timedelta
 
 from src.crud.CRUD import execute_read, create_customer, create_employee
-from src.utils.security import hash_password, verify_password, validate_password_strength
+from src.utils.security import (
+    hash_password, 
+    verify_password, 
+    validate_password_strength,
+    create_access_token,
+    get_current_user,
+    ACCESS_TOKEN_EXPIRE_MINUTES
+)
 from src.model.MODEL import (
     CustomerSignupRequest, 
     EmployeeSignupRequest, 
     LoginRequest, 
-    AuthResponse
+    AuthResponse,
+    TokenData
 )
 
 # Initialize router and logger
@@ -31,24 +29,11 @@ logger = logging.getLogger(__name__)
 # Signup Endpoints
 @router.post("/signup/customer", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 async def signup_customer(request: CustomerSignupRequest):
-    """
-    Register a new customer account.
-    
-    Args:
-        request: CustomerSignupRequest with user details
-        
-    Returns:
-        AuthResponse with created user information
-        
-    Raises:
-        HTTPException: 400 if email exists or password is weak
-    """
-    # Validate password strength
+    """Register a new customer account."""
     is_valid, error_msg = validate_password_strength(request.password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
     
-    # Check if email already exists
     existing_user = execute_read(
         "SELECT id FROM CUSTOMERS WHERE email = %s",
         (request.email,)
@@ -56,10 +41,8 @@ async def signup_customer(request: CustomerSignupRequest):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Hash password
     hashed_password = hash_password(request.password)
     
-    # Create customer
     try:
         customer_data = {
             "name": request.name,
@@ -69,7 +52,6 @@ async def signup_customer(request: CustomerSignupRequest):
             "membership": request.membership
         }
         customer = create_customer(customer_data)
-        
         logger.info(f"New customer registered: {request.email}")
         
         return {
@@ -86,26 +68,11 @@ async def signup_customer(request: CustomerSignupRequest):
 
 @router.post("/signup/employee", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
 async def signup_employee(request: EmployeeSignupRequest):
-    """
-    Register a new employee account.
-    
-    Note: In production, this should require admin authentication.
-    
-    Args:
-        request: EmployeeSignupRequest with employee details
-        
-    Returns:
-        AuthResponse with created employee information
-        
-    Raises:
-        HTTPException: 400 if email exists or password is weak
-    """
-    # Validate password strength
+    """Register a new employee account."""
     is_valid, error_msg = validate_password_strength(request.password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
     
-    # Check if email already exists
     existing_user = execute_read(
         "SELECT id FROM EMPLOYEES WHERE email = %s",
         (request.email,)
@@ -113,10 +80,8 @@ async def signup_employee(request: EmployeeSignupRequest):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
-    # Hash password
     hashed_password = hash_password(request.password)
     
-    # Create employee
     try:
         employee_data = {
             "name": request.name,
@@ -127,7 +92,6 @@ async def signup_employee(request: EmployeeSignupRequest):
             "dateOfEmployment": request.dateOfEmployment
         }
         employee = create_employee(employee_data)
-        
         logger.info(f"New employee registered: {request.email}")
         
         return {
@@ -145,31 +109,16 @@ async def signup_employee(request: EmployeeSignupRequest):
 # Login Endpoint
 @router.post("/login", response_model=AuthResponse)
 async def login(request: LoginRequest):
-    """
-    Authenticate a user (customer or employee) with Argon2 password verification.
-    
-    Args:
-        request: LoginRequest containing email, password, and role
-        
-    Returns:
-        AuthResponse with user information
-        
-    Raises:
-        HTTPException: 401 if credentials are invalid
-    """
-    # Determine which table to query based on role
+    """Authenticate a user and return a JWT access token."""
     table = "CUSTOMERS" if request.role == "customer" else "EMPLOYEES"
-    
-    # Query database for user by email only
     query = f"SELECT * FROM {table} WHERE email = %s"
     user = execute_read(query, (request.email,))
     
-    # Check if user exists
     if not user:
         logger.warning(f"Login attempt for non-existent user: {request.email}")
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    # Get password from user object
+    # Handle both dict and model results
     if isinstance(user, dict):
         stored_password = user.get("password")
         user_id = user["id"]
@@ -184,21 +133,31 @@ async def login(request: LoginRequest):
         user_role = user_dict.get("role", request.role)
         user_email = user_dict["email"]
     
-    # Verify password using Argon2
-    if not stored_password:
-        logger.warning(f"No password found for user: {request.email}")
-        raise HTTPException(status_code=401, detail="Invalid email or password")
-    
-    if not verify_password(request.password, stored_password):
+    if not stored_password or not verify_password(request.password, stored_password):
         logger.warning(f"Failed login attempt for {request.email}")
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    logger.info(f"Successful login for {request.email} as {request.role}")
+    # Generate JWT token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": user_email, "role": user_role},
+        expires_delta=access_token_expires
+    )
+    
+    logger.info(f"Successful login and token generation for {request.email}")
     
     return {
         "id": user_id,
         "name": user_name,
         "role": user_role,
         "email": user_email,
-        "message": "Login successful"
+        "message": "Login successful",
+        "access_token": access_token,
+        "token_type": "bearer"
     }
+
+
+@router.get("/me", response_model=TokenData)
+async def get_me(current_user: TokenData = Depends(get_current_user)):
+    """Return currently authenticated user information."""
+    return current_user

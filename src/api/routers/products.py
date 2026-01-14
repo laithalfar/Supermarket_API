@@ -1,12 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List, Optional
 from decimal import Decimal
 
-from src.model.MODEL import ProductCreate, ProductInDB, ProductUpdate
+from src.model.MODEL import ProductCreate, ProductInDB, ProductUpdate, TokenData
 from src.crud.CRUD import get_product, create_product, update_product, delete_product, get_products
+from src.utils.security import get_current_user
 
 # Create router 
-router = APIRouter(prefix="/products", tags=["products"])
+router = APIRouter(
+    prefix="/products", 
+    tags=["products"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # create product route
 @router.post("/", response_model=ProductInDB, status_code=201)

@@ -1,12 +1,17 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 from datetime import date
 
-from src.model.MODEL import EmployeeCreate, EmployeeInDB, EmployeeUpdate, Role
+from src.model.MODEL import EmployeeCreate, EmployeeInDB, EmployeeUpdate, Role, TokenData
 from src.crud.CRUD import get_employee, get_employees, create_employee, update_employee, delete_employee
+from src.utils.security import get_current_user
 
 # Create router
-router = APIRouter(prefix="/employees", tags=["employees"])
+router = APIRouter(
+    prefix="/employees", 
+    tags=["employees"],
+    dependencies=[Depends(get_current_user)]
+)
 
 # Create employee
 @router.post("/", response_model=EmployeeInDB, status_code=201)

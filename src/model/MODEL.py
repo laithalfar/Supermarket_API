@@ -267,3 +267,17 @@ class AuthResponse(BaseModel):
     role: str
     email: EmailStr
     message: str
+    access_token: Optional[str] = None
+    token_type: Optional[str] = None
+
+
+class Token(BaseModel):
+    """Token response model"""
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    """Token data model for decoded tokens"""
+    email: Optional[EmailStr] = None
+    role: Optional[str] = None

@@ -4,30 +4,6 @@ This directory contains utility scripts for database management, debugging, and 
 
 ## Database Management Scripts
 
-### `add_password_migration.py`
-Adds password columns to CUSTOMERS and EMPLOYEES tables if they don't exist.
-
-**Usage:**
-```bash
-python scripts/add_password_migration.py
-```
-
-**Purpose:** Safely migrates the database schema to include password fields for authentication.
-
----
-
-### `fix_schema.py`
-Rebuilds the TRANSACTION_DETAILS table with the correct schema.
-
-**Usage:**
-```bash
-python scripts/fix_schema.py
-```
-
-**Warning:** This script drops and recreates the TRANSACTION_DETAILS table. Use with caution in production.
-
----
-
 ### `fix_products.py`
 Checks for and fixes invalid product data (negative prices, costs, or stock).
 
@@ -80,18 +56,6 @@ python scripts/debug_users.py
 
 ---
 
-### `dump_products.py`
-Displays all products from the database.
-
-**Usage:**
-```bash
-python scripts/dump_products.py
-```
-
-**Note:** This script uses SQLite. Update it to use MySQL for the current database.
-
----
-
 ## Security Notice
 
 ⚠️ **Important:** These scripts contain database credentials and may expose sensitive data. 
@@ -126,3 +90,4 @@ DB_CONFIG = {
     "database": os.getenv("DB_NAME", "Supermarket"),
 }
 ```
+
