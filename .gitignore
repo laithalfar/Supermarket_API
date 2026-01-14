@@ -205,3 +205,25 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project-specific ignores
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+supermarket.db
+
+# Output files from scripts
+db_report.txt
+users_output.json
+*.json.bak
+
+# Temporary SQL files
+add_password_columns.sql
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

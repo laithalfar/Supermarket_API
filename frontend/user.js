@@ -3,10 +3,30 @@ const toTitleCase = (str) => str ? str.toLowerCase().replace(/(?:^|\s)\w/g, c =>
 let cart = [];
 let selectedBranch = null;
 
+let currentUser = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Session check
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+        window.location.href = '/';
+        return;
+    }
+    currentUser = JSON.parse(userStr);
+
+    // Update UI with user info
+    if (document.getElementById('user-name')) {
+        document.getElementById('user-name').innerText = currentUser.name;
+    }
+
     loadBranches();
     initCartUI();
 });
+
+function logout() {
+    localStorage.removeItem('user');
+    window.location.href = '/';
+}
 
 async function loadBranches() {
     const list = document.getElementById('branch-list');
@@ -123,8 +143,8 @@ async function handleCheckout() {
 
     const payload = {
         branch_id: selectedBranch.id,
-        employee_id: null, // Self-checkout
-        customer_id: null, // Anonymous or guest
+        employee_id: currentUser.role !== 'customer' ? currentUser.id : null,
+        customer_id: currentUser.role === 'customer' ? currentUser.id : null,
         total_amount: total,
         total: total,
         dateOfTransaction: now.toISOString().split('T')[0],

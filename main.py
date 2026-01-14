@@ -14,7 +14,8 @@ from src.api.routers import (
     employees_router,
     products_router,
     branches_router,
-    transactions_router
+    transactions_router,
+    auth_router
 )
 
 # Initialize FastAPI app
@@ -44,6 +45,7 @@ app.include_router(employees_router, prefix="/api/v1")
 app.include_router(products_router, prefix="/api/v1")
 app.include_router(branches_router, prefix="/api/v1")
 app.include_router(transactions_router, prefix="/api/v1")
+app.include_router(auth_router, prefix="/api/v1")
 
 # Serve static files
 app.mount("/static", StaticFiles(directory="frontend"), name="static")
@@ -52,6 +54,11 @@ app.mount("/static", StaticFiles(directory="frontend"), name="static")
 @app.get("/", tags=["UI"])
 async def root():
     return FileResponse("frontend/login.html")
+
+# Signup Page
+@app.get("/signup", tags=["UI"])
+async def signup_page():
+    return FileResponse("frontend/signup.html")
 
 # Admin Dashboard
 @app.get("/admin", tags=["UI"])

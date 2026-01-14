@@ -28,12 +28,11 @@ from pydantic import (
 )
 
 class Role(enum.StrEnum):
-    ADMIN: ClassVar[str] = "ADMIN"
-    ASSISSTANT_MANAGER: ClassVar[str] = "ASSISSTANT_MANAGER"
-    HEAD_OF_BRANCH: ClassVar[str] = "HEAD_OF_BRANCH"
-    CUSTOMER_ASSISSTANT: ClassVar[str] = "CUSTOMER_ASSISSTANT"
-    STOCKER: ClassVar[str] = "STOCKER"
-    CASHIER: ClassVar[str] = "CASHIER"
+    ADMIN = "ADMIN"
+    MANAGER = "MANAGER"
+    HEAD_OF_BRANCH = "HEAD_OF_BRANCH"
+    STOCKER = "STOCKER"
+    CASHIER = "CASHIER"
 
 
 class Customers(BaseModel):
@@ -41,6 +40,7 @@ class Customers(BaseModel):
     age: conint(gt=0, lt=120) = Field(examples=["7", "8"], description = "age of customer")
     email: EmailStr = Field(examples=["example@gmd.jo"], description = "email address of customer")
     membership: bool = Field(examples=[True, False], description = "customer membership status")
+    password: constr(min_length=6) = Field(default="password123", description="password for customer login")
 
 def validate_customer(data: dict):
     try:
@@ -53,11 +53,12 @@ def validate_customer(data: dict):
 
 class Employees(BaseModel):
     name: constr(min_length=1, max_length=100) = Field(examples=["John Doe", "Jane Doe"], description = "name of employee")
-    age: conint(gt=16, lt=70) = Field(examples=["7", "8"], description = "age of employee")
+    age: conint(gt=17, lt=120) = Field(examples=["18", "25"], description = "age of employee")
     dateOfEmployment: date = Field(examples=["2023-01-01", "2023-01-02"], description = "date of employment of employee")
     dateOfEndOfEmployment: Optional[date] = Field(default=None, examples=["2023-01-01", "2023-01-02"], description = "date of the end of employment of an employee which can be empty if employee is stll working")
     email: EmailStr = Field(examples=["example@gmd.jo"], description = "email address of customer", frozen = True)
     role: Role = Field(examples=["HEADOFBRANCH", "CASHIER"], description = "role of employee")
+    password: constr(min_length=6) = Field(default="password123", description="password for employee login")
 
 def validate_employee(data: dict):
     try:
@@ -106,7 +107,6 @@ def validate_branch(data: dict):
 class Transactions(BaseModel):
     branch_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the branch where the product was sold as a foreign key") ## ForeignKey
     customer_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the customer who made the purchase as a foreign key") # ForeignKey
-    employee_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the employee that made the transaction as a foreign key") # ForeignKey
     total_amount: condecimal(ge=0, decimal_places=2) = Field(examples=["56.92", "30.02"], description = "total amount of the transaction")
     dateOfTransaction: date = Field(examples=["2023-01-01", "2023-01-02"], description = "date of the transaction")
     timeOfTransaction: Any = Field(examples=["10:00", "21:00"], description = "time of the transaction")
@@ -232,13 +232,38 @@ class TransactionDetailInDB(TransactionDetails):
 # Response models
 class TransactionResponse(TransactionInDB):
     details: List[TransactionDetailInDB]
-
-
-
-
-
     
+# Authentication Models
+class SignupRequest(BaseModel):
+    """Base signup request model"""
+    name: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    age: int = Field(..., gt=0, lt=120)
 
 
+class CustomerSignupRequest(SignupRequest):
+    """Customer signup request model"""
+    membership: bool = False
 
-    
+
+class EmployeeSignupRequest(SignupRequest):
+    """Employee signup request model"""
+    role: str = Field(..., description="Employee role (ADMIN, CASHIER, etc.)")
+    dateOfEmployment: str = Field(..., description="Date of employment (YYYY-MM-DD)")
+
+
+class LoginRequest(BaseModel):
+    """Login request model"""
+    email: EmailStr
+    password: str
+    role: str  # 'customer' or 'admin'
+
+
+class AuthResponse(BaseModel):
+    """Authentication response model"""
+    id: int
+    name: str
+    role: str
+    email: EmailStr
+    message: str

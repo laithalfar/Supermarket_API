@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperVibe - Sign Up</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: radial-gradient(circle at top right, #1e1b4b, #020617);
+            padding: 2rem 0;
+        }
+
+        .signup-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 2.5rem;
+            border-radius: 24px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+
+        p {
+            color: #94a3b8;
+            margin-bottom: 2rem;
+        }
+
+        .role-selector {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+
+        .role-tab {
+            padding: 0.8rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: #94a3b8;
+            font-weight: 600;
+        }
+
+        .role-tab.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .form-group {
+            margin-bottom: 1.2rem;
+            text-align: left;
+        }
+
+        label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #6366f1;
+        }
+
+        .signup-btn {
+            width: 100%;
+            padding: 1.2rem;
+            border-radius: 16px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .signup-btn:hover {
+            background: #4f46e5;
+            transform: translateY(-2px);
+        }
+
+        .login-link {
+            margin-top: 1.5rem;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        .login-link a {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        #error-msg {
+            color: #ef4444;
+            margin-top: 1rem;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        .password-hint {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-top: 0.3rem;
+        }
+
+        [data-role-specific] {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="dark-theme">
+    <div class="signup-card">
+        <h1>Create Account</h1>
+        <p>Join the SuperVibe community</p>
+
+        <div class="role-selector">
+            <div class="role-tab active" data-role="customer">Customer</div>
+            <div class="role-tab" data-role="employee">Staff</div>
+        </div>
+
+        <form id="signup-form">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="name" required placeholder="John Doe">
+            </div>
+
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="email" required placeholder="example@gmd.jo">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="password" required placeholder="••••••••">
+                <div class="password-hint">Min 8 chars, 1 uppercase, 1 lowercase, 1 digit</div>
+            </div>
+
+            <div class="form-group">
+                <label>Age</label>
+                <input type="number" id="age" required min="18" max="119" placeholder="25">
+            </div>
+
+            <!-- Customer specific -->
+            <div class="form-group" data-role-specific="customer">
+                <label>Membership</label>
+                <select id="membership">
+                    <option value="false">No (Standard)</option>
+                    <option value="true">Yes (Vibe Member)</option>
+                </select>
+            </div>
+
+            <!-- Employee specific -->
+            <div class="form-group" data-role-specific="employee">
+                <label>Role</label>
+                <select id="employee-role">
+                    <option value="CASHIER">Cashier</option>
+                    <option value="MANAGER">Manager</option>
+                    <option value="STOCKER">Stocker</option>
+                    <option value="HEAD_OF_BRANCH">Head of Branch</option>
+                </select>
+            </div>
+
+            <button type="submit" class="signup-btn">
+                <span>Create Account</span>
+                <i class="fas fa-user-plus"></i>
+            </button>
+
+            <div id="error-msg"></div>
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="/">Login here</a>
+        </div>
+    </div>
+
+    <script>
+        let selectedRole = 'customer';
+        const roleTabs = document.querySelectorAll('.role-tab');
+        const specificFields = document.querySelectorAll('[data-role-specific]');
+
+        // Show initial specific fields
+        document.querySelector('[data-role-specific="customer"]').style.display = 'block';
+
+        roleTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                roleTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                selectedRole = tab.dataset.role;
+
+                // Toggle specific fields
+                specificFields.forEach(f => {
+                    f.style.display = f.dataset.roleSpecific === selectedRole ? 'block' : 'none';
+                });
+            });
+        });
+
+        document.getElementById('signup-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const errorEl = document.getElementById('error-msg');
+            errorEl.style.display = 'none';
+
+            const payload = {
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                age: parseInt(document.getElementById('age').value)
+            };
+
+            let endpoint = '/api/v1/auth/signup/customer';
+            if (selectedRole === 'customer') {
+                payload.membership = document.getElementById('membership').value === 'true';
+            } else {
+                endpoint = '/api/v1/auth/signup/employee';
+                payload.role = document.getElementById('employee-role').value;
+                payload.dateOfEmployment = new Date().toISOString().split('T')[0];
+            }
+
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    alert(data.message + '. Please login now.');
+                    window.location.href = '/';
+                } else {
+                    const data = await res.json();
+                    let msg = data.detail;
+                    if (Array.isArray(msg)) msg = msg[0].msg;
+                    errorEl.innerText = msg || 'Registration failed';
+                    errorEl.style.display = 'block';
+                }
+            } catch (err) {
+                errorEl.innerText = 'Network error. Please try again.';
+                errorEl.style.display = 'block';
+            }
+        };
+    </script>
+</body>
+
+</html>

@@ -2,7 +2,29 @@ const API_BASE = '/api/v1';
 const toTitleCase = (str) => str ? str.toLowerCase().replace(/(?:^|\s)\w/g, c => c.toUpperCase()) : '-';
 let currentSection = 'dashboard';
 
+let currentUser = null;
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Session check
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
+        window.location.href = '/';
+        return;
+    }
+    currentUser = JSON.parse(userStr);
+
+    // Safety check for role (optional but good)
+    if (currentUser.role === 'customer') {
+        window.location.href = '/shop';
+        return;
+    }
+
+    // Update Profile UI
+    const profileName = document.querySelector('.sidebar-footer .user-name');
+    const profileRole = document.querySelector('.sidebar-footer .user-role');
+    if (profileName) profileName.innerText = currentUser.name;
+    if (profileRole) profileRole.innerText = toTitleCase(currentUser.role);
+
     initNav();
     loadSection('dashboard');
     setupModal();
@@ -19,6 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 });
+
+function logout() {
+    localStorage.removeItem('user');
+    window.location.href = '/';
+}
 
 function initNav() {
     document.querySelectorAll('.sidebar-nav li').forEach(item => {
@@ -112,7 +139,7 @@ async function renderDashboard() {
                             <td>${t.timeOfTransaction ? (t.timeOfTransaction.includes('PT') ? t.timeOfTransaction.replace('PT', '').replace('H', 'h').replace('M', 'm') : t.timeOfTransaction.substring(0, 5)) : 'Recently'}</td>
                             <td>
                                 <div class="action-btns">
-                                    <button class="btn-mini"><i class="fas fa-eye"></i></button>
+                                    <button class="btn-mini" onclick="deleteEntity('transactions', ${t.id})"><i class="fas fa-trash delete"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -171,7 +198,7 @@ async function renderEntityTable(entity, title) {
             }).join('')}
                             <td>
                                 <div class="action-btns">
-                                    <button class="btn-mini" onclick="deleteEntity('${entity}', ${row.id})"><i class="fas fa-trash delete"></i></button>
+                                    <button class="btn-mini delete" onclick="deleteEntity('${entity}', ${row.id})"><i class="fas fa-trash"></i></button>
                                 </div>
                             </td>
                         </tr>
@@ -240,7 +267,6 @@ function openEntityModal(entity) {
         fields = `
             <div class="form-group"><label>Branch ID</label><input type="number" name="branch_id" required></div>
             <div class="form-group"><label>Customer ID</label><input type="number" name="customer_id"></div>
-            <div class="form-group"><label>Employee ID</label><input type="number" name="employee_id" required></div>
             <div class="form-group"><label>Total Amount</label><input type="number" step="0.01" name="total_amount" required></div>
             <div class="form-group"><label>Date</label><input type="date" name="dateOfTransaction" required></div>
             <div class="form-group"><label>Time</label><input type="time" name="timeOfTransaction" required></div>
@@ -258,7 +284,7 @@ function openEntityModal(entity) {
         const formData = new FormData(form);
         const jsonData = {};
         formData.forEach((value, key) => {
-            if (['age', 'stock', 'size', 'total_stock', 'branch_id', 'customer_id', 'employee_id'].includes(key)) {
+            if (['age', 'stock', 'size', 'total_stock', 'branch_id', 'customer_id'].includes(key)) {
                 jsonData[key] = value ? parseInt(value) : null;
             }
             else if (['sellPrice', 'cost', 'total_amount', 'total'].includes(key)) {

@@ -109,7 +109,16 @@
                 <i class="fas fa-shopping-cart"></i>
                 <span style="font-weight:800; font-size:1.5rem">SuperVibe</span>
             </div>
-            <div class="header-actions">
+            <div class="header-actions" style="display: flex; gap: 1rem; align-items: center;">
+                <div class="user-profile"
+                    style="display: flex; align-items: center; gap: 0.8rem; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+                    <i class="fas fa-user-circle" style="color: #6366f1; font-size: 1.2rem;"></i>
+                    <span id="user-name" style="font-weight: 600; font-size: 0.9rem;">User</span>
+                    <button class="btn-mini" onclick="logout()"
+                        style="padding: 0.4rem; background: transparent; border: none; color: #94a3b8; cursor: pointer;">
+                        <i class="fas fa-sign-out-alt"></i>
+                    </button>
+                </div>
                 <button class="btn-primary" id="cart-btn" style="padding: 0.8rem 1.5rem">
                     <i class="fas fa-shopping-basket"></i>
                     <span style="margin-left: 0.5rem">Cart</span>

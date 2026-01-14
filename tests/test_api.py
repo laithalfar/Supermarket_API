@@ -84,7 +84,6 @@ def test_api():
     transaction_data = {
         "branch_id": branch_id,
         "customer_id": customer_id,
-        "employee_id": employee_id,
         "total_amount": 21.00,
         "dateOfTransaction": "2023-12-27",
         "timeOfTransaction": "12:00",

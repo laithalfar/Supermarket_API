@@ -92,20 +92,104 @@
 
 <body class="dark-theme">
     <div class="login-card fade-in">
-        <div class="logo-large"><i class="fas fa-shopping-cart"></i></div>
-        <h1>Welcome to SuperVibe</h1>
-        <p>Please select your portal to continue</p>
-
-        <div class="role-options">
-            <button class="role-btn admin" onclick="window.location.href='/admin'">
-                <i class="fas fa-user-shield"></i>
-                <span>Admin Dashboard</span>
-            </button>
-            <button class="role-btn customer" onclick="window.location.href='/shop'">
-                <i class="fas fa-user"></i>
-                <span>Customer Portal</span>
-            </button>
+        <div id="role-selection">
+            <h1>Welcome to SuperVibe</h1>
+            <p>Please select your portal to continue</p>
+            <div class="role-options">
+                <button class="role-btn admin" onclick="showLoginForm('admin')">
+                    <i class="fas fa-user-shield"></i>
+                    <span>Admin Dashboard</span>
+                </button>
+                <button class="role-btn customer" onclick="showLoginForm('customer')">
+                    <i class="fas fa-user"></i>
+                    <span>Customer Portal</span>
+                </button>
+            </div>
         </div>
+
+        <div id="login-form-container" style="display: none;">
+            <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem;">
+                <button class="btn-mini" onclick="showRoleSelection()"
+                    style="position: absolute; left: 2rem; top: 2rem;">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h1 id="login-title">Login</h1>
+            </div>
+            <p id="login-subtitle">Enter your credentials to continue</p>
+
+            <form id="login-form" style="display: flex; flex-direction: column; gap: 1rem; text-align: left;">
+                <div class="form-group">
+                    <label style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Email
+                        Address</label>
+                    <input type="email" id="email" required placeholder="example@gmd.jo"
+                        style="width: 100%; padding: 1rem; border-radius: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); color: white; outline: none;">
+                </div>
+                <div class="form-group">
+                    <label
+                        style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 0.5rem; display: block;">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••"
+                        style="width: 100%; padding: 1rem; border-radius: 12px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255,255,255,0.1); color: white; outline: none;">
+                </div>
+                <button type="submit" class="role-btn"
+                    style="justify-content: center; background: #6366f1; margin-top: 1rem;">
+                    <span>Sign In</span>
+                    <i class="fas fa-sign-in-alt"></i>
+                </button>
+                <p id="login-error"
+                    style="color: #ef4444; font-size: 0.9rem; margin-top: 1rem; text-align: center; display: none;"></p>
+                <div style="margin-top: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.95rem;">
+                    Don't have an account? <a href="/signup"
+                        style="color: #6366f1; text-decoration: none; font-weight: 600;">Sign Up</a>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            let selectedRole = '';
+
+            function showLoginForm(role) {
+                selectedRole = role;
+                document.getElementById('role-selection').style.display = 'none';
+                document.getElementById('login-form-container').style.display = 'block';
+                document.getElementById('login-title').innerText = role === 'admin' ? 'Admin Login' : 'Customer Login';
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('login-error').style.display = 'none';
+            }
+
+            function showRoleSelection() {
+                document.getElementById('role-selection').style.display = 'block';
+                document.getElementById('login-form-container').style.display = 'none';
+            }
+
+            document.getElementById('login-form').onsubmit = async (e) => {
+                e.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const errorEl = document.getElementById('login-error');
+
+                try {
+                    const res = await fetch('/api/v1/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password, role: selectedRole })
+                    });
+
+                    if (res.ok) {
+                        const user = await res.json();
+                        localStorage.setItem('user', JSON.stringify(user));
+                        window.location.href = selectedRole === 'admin' ? '/admin' : '/shop';
+                    } else {
+                        const data = await res.json();
+                        errorEl.innerText = data.detail || 'Invalid credentials';
+                        errorEl.style.display = 'block';
+                    }
+                } catch (err) {
+                    errorEl.innerText = 'Network error. Please try again.';
+                    errorEl.style.display = 'block';
+                }
+            };
+        </script>
     </div>
 </body>
 
