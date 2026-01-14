@@ -1,3 +1,13 @@
+'''
+As outlined in the 
+README.md
+, this file is used to set up the database structure initially. A user or administrator would run it manually via the MySQL command line:
+
+bash
+mysql -u root -p < database_schema.sql
+'''
+
+
 -- Create and use the database
 CREATE DATABASE IF NOT EXISTS Supermarket;
 USE Supermarket;

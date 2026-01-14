@@ -27,6 +27,10 @@ from pydantic import (
     ValidationError
 )
 
+# The project was set up with the intention of using SQLAlchemy's more advanced 
+# features later on, but the current logic was written using simpler raw SQL queries.
+
+# enum of the possible roles for employees in the supermarket
 class Role(enum.StrEnum):
     ADMIN = "ADMIN"
     MANAGER = "MANAGER"
@@ -35,12 +39,13 @@ class Role(enum.StrEnum):
     CASHIER = "CASHIER"
 
 
+# Customer model validated with pydantic for data validation
 class Customers(BaseModel):
     name: constr(min_length=1, max_length=100) = Field(examples=["John Doe", "Jane Doe"], description = "name of customer")
     age: conint(gt=0, lt=120) = Field(examples=["7", "8"], description = "age of customer")
     email: EmailStr = Field(examples=["example@gmd.jo"], description = "email address of customer")
     membership: bool = Field(examples=[True, False], description = "customer membership status")
-    password: constr(min_length=6) = Field(default="password123", description="password for customer login")
+    password: constr(min_length=6) = Field(default="password123", description="password for customer login", exclude=True)
 
 def validate_customer(data: dict):
     try:
@@ -51,6 +56,7 @@ def validate_customer(data: dict):
         for error in e.errors():
             print(error)
 
+# Employee model validated with pydantic for data validation
 class Employees(BaseModel):
     name: constr(min_length=1, max_length=100) = Field(examples=["John Doe", "Jane Doe"], description = "name of employee")
     age: conint(gt=17, lt=120) = Field(examples=["18", "25"], description = "age of employee")
@@ -58,7 +64,7 @@ class Employees(BaseModel):
     dateOfEndOfEmployment: Optional[date] = Field(default=None, examples=["2023-01-01", "2023-01-02"], description = "date of the end of employment of an employee which can be empty if employee is stll working")
     email: EmailStr = Field(examples=["example@gmd.jo"], description = "email address of customer", frozen = True)
     role: Role = Field(examples=["HEADOFBRANCH", "CASHIER"], description = "role of employee")
-    password: constr(min_length=6) = Field(default="password123", description="password for employee login")
+    password: constr(min_length=6) = Field(default="password123", description="password for employee login", exclude=True)
 
 def validate_employee(data: dict):
     try:
@@ -69,7 +75,7 @@ def validate_employee(data: dict):
         for error in e.errors():
             print(error)
 
-
+# Product model validated with pydantic for data validation
 class Products(BaseModel):
     name: constr(min_length=1, max_length=100) = Field(examples=["Chicken sandwich", "redbull drink"], description = "Uname of product")
     stock: conint(ge=0) = Field(examples=["30", "1523"], description = "amount of stock for this product")
@@ -87,7 +93,7 @@ def validate_product(data: dict):
         for error in e.errors():
             print(error)
 
-
+# Branch model validated with pydantic for data validation
 class Branches(BaseModel):
     name: constr(min_length=1, max_length=100) = Field(examples=["Main Branch", "Airport Branch"], description = "name of branch")
     location: constr(min_length=1, max_length=255) = Field(examples=["Rabieh", "Mecca_street"], description = "location of branch")
@@ -103,7 +109,7 @@ def validate_branch(data: dict):
         for error in e.errors():
             print(error)
 
-
+# Transaction model validated with pydantic for data validation
 class Transactions(BaseModel):
     branch_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the branch where the product was sold as a foreign key") ## ForeignKey
     customer_id: Optional[int] = Field(None, examples=["1", "2"], description = "id of the customer who made the purchase as a foreign key") # ForeignKey
@@ -121,7 +127,7 @@ def validate_transaction(data: dict):
         for error in e.errors():
             print(error)
 
-
+# TransactionDetails model validated with pydantic for data validation
 class TransactionDetails(BaseModel):
     transaction_id: Optional[int] = Field(None, description = "id of a transaction as a foreign key")
     product_id: int = Field(examples=["1", "2"], description = "id of a product as a foreign key")  # Foreign key to Product
@@ -139,11 +145,11 @@ def validate_transactionDetails(data: dict):
 
 ## Apply Pydantic models to database tables (Schema -> Table)
 
-
- # Create models (for POST requests) 
- # pass means they're identical to their parent classes, 
+ # Below are the Create models (for POST requests) 
+ # 'pass' means they're identical to their parent classes, 
  # but we separate them for future flexibility.
  # These are classes for creating new models
+
 
 
 class CustomerCreate(Customers):
@@ -158,6 +164,7 @@ class ProductCreate(Products):
 class BranchCreate(Branches):
     pass
 
+# we add details to the transaction create model
 class TransactionCreate(Transactions):
     details: List[TransactionDetails] = Field(
         ...,
@@ -167,6 +174,8 @@ class TransactionCreate(Transactions):
 
 
 # Update models (for PATCH requests)
+# in this its the same fields but marked as optional
+# depending on whether you want to update them or not
 class CustomerUpdate(Customers):
     name: Optional[constr(min_length=1, max_length=100)] = None
     age: Optional[conint(gt=0, lt=120)] = None
@@ -192,10 +201,13 @@ class BranchUpdate(Branches):
     size: Optional[constr(min_length=1, max_length=50)] = None
     total_stock: Optional[conint(ge=0)] = None
 
-# Database models made to read from the database 
+# Database models made to read from the database
+# these models include the 'id' field which is auto-generated by the database
+
 class CustomerInDB(Customers):
     id: int
 
+    # The 'from_attributes' parameter tells Pydantic to use the attributes of the class as the fields of the model
     class Config:
         from_attributes = True
 
@@ -229,11 +241,13 @@ class TransactionDetailInDB(TransactionDetails):
     class Config:
         from_attributes = True
 
-# Response models
+# Transaction response model including transaction details
 class TransactionResponse(TransactionInDB):
     details: List[TransactionDetailInDB]
     
 # Authentication Models
+
+# Base signup request model
 class SignupRequest(BaseModel):
     """Base signup request model"""
     name: str = Field(..., min_length=1, max_length=100)
@@ -241,25 +255,25 @@ class SignupRequest(BaseModel):
     password: str = Field(..., min_length=8)
     age: int = Field(..., gt=0, lt=120)
 
-
+# Customer signup request model
 class CustomerSignupRequest(SignupRequest):
     """Customer signup request model"""
     membership: bool = False
 
-
+# Employee signup request model
 class EmployeeSignupRequest(SignupRequest):
     """Employee signup request model"""
     role: str = Field(..., description="Employee role (ADMIN, CASHIER, etc.)")
     dateOfEmployment: str = Field(..., description="Date of employment (YYYY-MM-DD)")
 
-
+# Login request model
 class LoginRequest(BaseModel):
     """Login request model"""
     email: EmailStr
     password: str
     role: str  # 'customer' or 'admin'
 
-
+# Authentication response model
 class AuthResponse(BaseModel):
     """Authentication response model"""
     id: int
@@ -270,13 +284,13 @@ class AuthResponse(BaseModel):
     access_token: Optional[str] = None
     token_type: Optional[str] = None
 
-
+# Token model for JWT tokens
 class Token(BaseModel):
     """Token response model"""
     access_token: str
     token_type: str
 
-
+# Token data model for decoded tokens
 class TokenData(BaseModel):
     """Token data model for decoded tokens"""
     email: Optional[EmailStr] = None

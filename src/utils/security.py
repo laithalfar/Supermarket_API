@@ -1,3 +1,9 @@
+'''
+Docstring for src.utils.security
+Utility functions for password hashing, JWT token creation, and user authentication.
+
+'''
+
 import os
 import logging
 from datetime import datetime, timedelta
@@ -12,10 +18,29 @@ from src.crud.CRUD import execute_read
 from src.model.MODEL import TokenData
 
 # Security Configuration
-SECRET_KEY = os.getenv("SECRET_KEY", "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7")
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+# Get secret key from environment variable
+SECRET_KEY = os.getenv("SECRET_KEY")
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is not set in environment variables. Please check your .env file.")
 
+#Get algorithm from environment variable
+ALGORITHM = os.getenv("ALGORITHM")
+if not ALGORITHM:
+    raise RuntimeError("ALGORITHM is not set in environment variables.")
+
+#Get expire minutes from environment variable
+expire_minutes_str = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES")
+if not expire_minutes_str:
+    raise RuntimeError("ACCESS_TOKEN_EXPIRE_MINUTES is not set in environment variables.")
+
+#Convert expire minutes to integer
+try:
+    ACCESS_TOKEN_EXPIRE_MINUTES = int(expire_minutes_str)
+except ValueError:
+    raise RuntimeError("ACCESS_TOKEN_EXPIRE_MINUTES must be an integer.")
+
+# Get OAuth2 scheme for token extraction
+# The tokenUrl should point to the login endpoint
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 logger = logging.getLogger(__name__)
@@ -24,6 +49,7 @@ logger = logging.getLogger(__name__)
 ph = PasswordHasher()
 
 
+# Password Hashing with argon2
 def hash_password(password: str) -> str:
     """Hash a password using Argon2."""
     try:
@@ -34,7 +60,7 @@ def hash_password(password: str) -> str:
         logger.error(f"Error hashing password: {e}")
         raise
 
-
+# Verify entered password against the stored hash
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash using Argon2."""
     try:
@@ -50,6 +76,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         return False
 
 
+# Validate password strength before allowing it to be set
 def validate_password_strength(password: str) -> tuple[bool, str]:
     """Validate password strength requirements."""
     if len(password) < 8:
@@ -62,19 +89,24 @@ def validate_password_strength(password: str) -> tuple[bool, str]:
         return False, "Password must contain at least one digit"
     return True, ""
 
-
+## data is dictionary
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     """Create a new JWT access token."""
     to_encode = data.copy()
+    # if an expiry time is set then use it else use default expiry time of 15 minutes
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=15)
+    
+    # add expiry time to data
     to_encode.update({"exp": expire})
+    
+    # encode data
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-
+# get the current active user
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     """Dependency to validate JWT and return current user identifier."""
     credentials_exception = HTTPException(
@@ -82,10 +114,14 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+    # decode token
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         role: str = payload.get("role")
+
+        #validate decoded email and role
         if email is None:
             raise credentials_exception
         token_data = TokenData(email=email, role=role)
@@ -99,4 +135,5 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     # if user is None:
     #     raise credentials_exception
     
+    #return decoded email and role
     return token_data

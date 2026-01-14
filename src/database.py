@@ -14,7 +14,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Database configuration
-DATABASE_URL = os.getenv("DATABASE_URL", "mysql+pymysql://root:0798628195Far@localhost/Supermarket")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set in environment variables. Please check your .env file.")
 
 # Create SQLAlchemy engine
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
@@ -22,9 +24,12 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 # SessionLocal class for dependency injection
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for models
+# Base class for models to inherit from
+# this is for future use to use sqlalchemy to create models
+# currently we are using raw sql queries (currently not using sqlalchemy)
 Base = declarative_base()
 
+# function to get DB session
 def get_db():
     """Dependency to get DB session"""
     db = SessionLocal()
