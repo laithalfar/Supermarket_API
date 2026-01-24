@@ -4,7 +4,9 @@ import logging
 from typing import Optional
 from datetime import timedelta
 
-from src.crud.CRUD import execute_read, create_customer, create_employee
+from sqlalchemy.orm import Session
+from src.database import get_db
+from src.crud import CRUD
 from src.utils.security import (
     hash_password, 
     verify_password, 
@@ -30,7 +32,7 @@ logger = logging.getLogger(__name__)
 # Signup Endpoints 
 # customer endpoint on the signup
 @router.post("/signup/customer", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def signup_customer(request: CustomerSignupRequest):
+async def signup_customer(request: CustomerSignupRequest, db: Session = Depends(get_db)):
     """Register a new customer account."""
 
     # validate password strength
@@ -39,10 +41,7 @@ async def signup_customer(request: CustomerSignupRequest):
         raise HTTPException(status_code=400, detail=error_msg)
     
     # Check if email already exists
-    existing_user = execute_read(
-        "SELECT id FROM CUSTOMERS WHERE email = %s",
-        (request.email,)
-    )
+    existing_user = CRUD.get_customers(db, email=request.email)
 
     # If email exists, raise error
     if existing_user:
@@ -61,8 +60,8 @@ async def signup_customer(request: CustomerSignupRequest):
             "membership": request.membership
         }
 
-        # Create customer in the database using dict
-        customer = create_customer(customer_data)
+        # Create customer in the database
+        customer = CRUD.create_customer(db, customer_data)
         logger.info(f"New customer registered: {request.email}")
         
         # Return success response
@@ -80,7 +79,7 @@ async def signup_customer(request: CustomerSignupRequest):
 
 # Employee endpoint on the signup
 @router.post("/signup/employee", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
-async def signup_employee(request: EmployeeSignupRequest):
+async def signup_employee(request: EmployeeSignupRequest, db: Session = Depends(get_db)):
     """Register a new employee account."""
 
     # Validate password strength
@@ -89,10 +88,7 @@ async def signup_employee(request: EmployeeSignupRequest):
         raise HTTPException(status_code=400, detail=error_msg)
     
     # Check if email already exists
-    existing_user = execute_read(
-        "SELECT id FROM EMPLOYEES WHERE email = %s",
-        (request.email,)
-    )
+    existing_user = CRUD.get_employees(db, email=request.email)
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
     
@@ -110,8 +106,8 @@ async def signup_employee(request: EmployeeSignupRequest):
             "dateOfEmployment": request.dateOfEmployment
         }
 
-        # Create employee in the database using dict
-        employee = create_employee(employee_data)
+        # Create employee in the database
+        employee = CRUD.create_employee(db, employee_data)
         logger.info(f"New employee registered: {request.email}")
         
         return {
@@ -128,15 +124,19 @@ async def signup_employee(request: EmployeeSignupRequest):
 
 # Login Endpoint
 @router.post("/login", response_model=AuthResponse)
-async def login(request: LoginRequest):
+async def login(request: LoginRequest, db: Session = Depends(get_db)):
     """Authenticate a user and return a JWT access token."""
 
     # Determine table based on role
     table = "CUSTOMERS" if request.role == "customer" else "EMPLOYEES"
 
     # Fetch user by email
-    query = f"SELECT * FROM {table} WHERE email = %s"
-    user = execute_read(query, (request.email,))
+    if request.role == "customer":
+        users = CRUD.get_customers(db, email=request.email)
+    else:
+        users = CRUD.get_employees(db, email=request.email)
+    
+    user = users[0] if users else None
     
     # Check if user exists
     if not user:

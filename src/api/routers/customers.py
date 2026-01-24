@@ -1,8 +1,9 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-
+from sqlalchemy.orm import Session
+from src.database import get_db
 from src.model.MODEL import CustomerCreate, CustomerInDB, CustomerUpdate, TokenData
-from src.crud.CRUD import get_customer, get_customers, create_customer, update_customer, delete_customer
+from src.crud import CRUD
 from src.utils.security import get_current_user
 
 # Create router
@@ -14,30 +15,30 @@ router = APIRouter(
 
 # List customers
 @router.get("/", response_model=List[CustomerInDB])
-async def list_customers(skip: int = 0, limit: int = 100):
-    return get_customers(skip=skip, limit=limit)
+async def list_customers(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    return CRUD.get_customers(db, skip=skip, limit=limit)
 
 # Create customer
 @router.post("/", response_model=CustomerInDB, status_code=201)
-async def create_customer_route(customer: CustomerCreate):
+async def create_customer_route(customer: CustomerCreate, db: Session = Depends(get_db)):
     try:
-        return create_customer(customer.model_dump())
+        return CRUD.create_customer(db, customer.model_dump())
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 # Read customer
 @router.get("/{customer_id}", response_model=CustomerInDB)
-async def read_customer(customer_id: int):
-    customer = get_customer(customer_id)
+async def read_customer(customer_id: int, db: Session = Depends(get_db)):
+    customer = CRUD.get_customer(db, customer_id)
     if customer is None:
         raise HTTPException(status_code=404, detail="Customer not found")
     return customer
 
 # Update customer
 @router.put("/{customer_id}", response_model=CustomerInDB)
-async def update_customer_route(customer_id: int, customer: CustomerUpdate):
+async def update_customer_route(customer_id: int, customer: CustomerUpdate, db: Session = Depends(get_db)):
     try:
-        updated = update_customer(customer_id, customer.model_dump(exclude_unset=True))
+        updated = CRUD.update_customer(db, customer_id, customer.model_dump(exclude_unset=True))
         if updated is None:
             raise HTTPException(status_code=404, detail="Customer not found")
         return updated
@@ -46,8 +47,8 @@ async def update_customer_route(customer_id: int, customer: CustomerUpdate):
 
 # Delete customer
 @router.delete("/{customer_id}", status_code=204)
-async def delete_customer_route(customer_id: int):
-    success = delete_customer(customer_id)
+async def delete_customer_route(customer_id: int, db: Session = Depends(get_db)):
+    success = CRUD.delete_customer(db, customer_id)
     if not success:
         raise HTTPException(status_code=404, detail="Customer not found")
     return None

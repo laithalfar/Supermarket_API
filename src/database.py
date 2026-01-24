@@ -5,8 +5,7 @@
 '''
 
 from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, DeclarativeBase, Session
 import os
 from dotenv import load_dotenv
 
@@ -24,10 +23,9 @@ engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 # SessionLocal class for dependency injection
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Base class for models to inherit from
-# this is for future use to use sqlalchemy to create models
-# currently we are using raw sql queries (currently not using sqlalchemy)
-Base = declarative_base()
+# Base class for models to inherit from (SQLAlchemy 2.0 style)
+class Base(DeclarativeBase):
+    pass
 
 # function to get DB session
 def get_db():
