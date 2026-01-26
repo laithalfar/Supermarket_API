@@ -1,9 +1,14 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 import os
+import logging
+
+# Set up logging for main.py
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Load environment variables
 load_dotenv()
@@ -27,6 +32,22 @@ app = FastAPI(
     redoc_url="/api/redoc",
     openapi_url="/api/openapi.json"
 )
+
+# Request Logging Middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Incoming: {request.method} {request.url}")
+    auth_header = request.headers.get("Authorization")
+    debug_source = request.headers.get("X-Debug-Source")
+    
+    if auth_header:
+        logger.info(f"Auth Header: {auth_header[:15]}... [Source: {debug_source or 'unknown'}]")
+    else:
+        logger.info(f"Auth Header: MISSING [Source: {debug_source or 'unknown'}]")
+        logger.info(f"All Headers: {dict(request.headers)}")
+    
+    response = await call_next(request)
+    return response
 
 # CORS middleware configuration
 # CORS (Cross-Origin Resource Sharing) middleware is server-side code that helps web applications 

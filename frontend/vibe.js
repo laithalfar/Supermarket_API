@@ -74,7 +74,9 @@ function loadSection(section) {
 
 async function fetchData(endpoint) {
     try {
-        const response = await fetch(`${API_BASE}/${endpoint}/`);
+        const response = await fetch(`${API_BASE}/${endpoint}/`, {
+            headers: { 'Authorization': 'Bearer ' + currentUser.access_token }
+        });
         if (!response.ok) throw new Error('Network response was not ok');
         return await response.json();
     } catch (error) {
@@ -305,7 +307,10 @@ function openEntityModal(entity) {
         try {
             const res = await fetch(`${API_BASE}/${entity === 'transactions' ? 'transactions' : entity}/`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + currentUser.access_token
+                },
                 body: JSON.stringify(jsonData)
             });
             if (res.ok) {
@@ -327,7 +332,10 @@ async function deleteEntity(entity, id) {
     if (!confirm('Are you sure you want to delete this record?')) return;
 
     try {
-        const res = await fetch(`${API_BASE}/${entity}/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${API_BASE}/${entity}/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + currentUser.access_token }
+        });
         if (res.ok) {
             showToast('Record deleted');
             loadSection(entity);

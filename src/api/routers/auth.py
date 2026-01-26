@@ -35,36 +35,34 @@ logger = logging.getLogger(__name__)
 async def signup_customer(request: CustomerSignupRequest, db: Session = Depends(get_db)):
     """Register a new customer account."""
 
-    # validate password strength
+    # 1. Validate password strength
     is_valid, error_msg = validate_password_strength(request.password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
     
-    # Check if email already exists
-    existing_user = CRUD.get_customers(db, email=request.email)
-
-    # If email exists, raise error
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    # 2. Cross-table email uniqueness check
+    # Check if email exists in CUSTOMERS
+    if CRUD.get_customers(db, email=request.email):
+        raise HTTPException(status_code=400, detail="Email already registered as a customer")
     
-    # Hash the password
-    hashed_password = hash_password(request.password)
+    # Check if email exists in EMPLOYEES
+    if CRUD.get_employees(db, email=request.email):
+        raise HTTPException(status_code=400, detail="Email already registered as staff")
     
-    # Create customer record using hashed password
+    # 3. Create customer record
+    # Note: CRUD.create_customer handles hashing the password
     try:
         customer_data = {
             "name": request.name,
             "email": request.email,
-            "password": hashed_password,
+            "password": request.password, # Pass plain password, CRUD handles hashing
             "age": request.age,
             "membership": request.membership
         }
 
-        # Create customer in the database
         customer = CRUD.create_customer(db, customer_data)
         logger.info(f"New customer registered: {request.email}")
         
-        # Return success response
         return {
             "id": customer.id,
             "name": customer.name,
@@ -74,7 +72,9 @@ async def signup_customer(request: CustomerSignupRequest, db: Session = Depends(
         }
     except Exception as e:
         logger.error(f"Error creating customer: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create customer account")
+        # Return clearer message if it's likely a data issue
+        detail = str(e) if "integrity" in str(e).lower() else "Failed to create customer account"
+        raise HTTPException(status_code=400, detail=detail)
 
 
 # Employee endpoint on the signup
@@ -82,31 +82,30 @@ async def signup_customer(request: CustomerSignupRequest, db: Session = Depends(
 async def signup_employee(request: EmployeeSignupRequest, db: Session = Depends(get_db)):
     """Register a new employee account."""
 
-    # Validate password strength
+    # 1. Validate password strength
     is_valid, error_msg = validate_password_strength(request.password)
     if not is_valid:
         raise HTTPException(status_code=400, detail=error_msg)
     
-    # Check if email already exists
-    existing_user = CRUD.get_employees(db, email=request.email)
-    if existing_user:
-        raise HTTPException(status_code=400, detail="Email already registered")
+    # 2. Cross-table email uniqueness check
+    if CRUD.get_customers(db, email=request.email):
+        raise HTTPException(status_code=400, detail="Email already registered as a customer")
     
-    # Hash the password
-    hashed_password = hash_password(request.password)
+    if CRUD.get_employees(db, email=request.email):
+        raise HTTPException(status_code=400, detail="Email already registered as staff")
     
-    # Create employee record using hashed password
+    # 3. Create employee record
+    # Note: CRUD.create_employee handles hashing the password
     try:
         employee_data = {
             "name": request.name,
             "email": request.email,
-            "password": hashed_password,
+            "password": request.password,
             "age": request.age,
             "role": request.role,
-            "dateOfEmployment": request.dateOfEmployment
+            "dateOfEmployment": request.dateOfEmployment # Already a date object from Pydantic
         }
 
-        # Create employee in the database
         employee = CRUD.create_employee(db, employee_data)
         logger.info(f"New employee registered: {request.email}")
         
@@ -119,7 +118,8 @@ async def signup_employee(request: EmployeeSignupRequest, db: Session = Depends(
         }
     except Exception as e:
         logger.error(f"Error creating employee: {e}")
-        raise HTTPException(status_code=500, detail="Failed to create employee account")
+        detail = str(e) if "integrity" in str(e).lower() else "Failed to create employee account"
+        raise HTTPException(status_code=400, detail=detail)
 
 
 # Login Endpoint
@@ -143,21 +143,12 @@ async def login(request: LoginRequest, db: Session = Depends(get_db)):
         logger.warning(f"Login attempt for non-existent user: {request.email}")
         raise HTTPException(status_code=401, detail="Invalid email or password")
     
-    # Handle both dict and model results
-    if isinstance(user, dict):
-        stored_password = user.get("password")
-        user_id = user["id"]
-        user_name = user["name"]
-        user_role = user.get("role", request.role)
-        user_email = user["email"]
-    else:
-        # Change model to dict
-        user_dict = user.model_dump() if hasattr(user, 'model_dump') else dict(user)
-        stored_password = user_dict.get("password")
-        user_id = user_dict["id"]
-        user_name = user_dict["name"]
-        user_role = user_dict.get("role", request.role)
-        user_email = user_dict["email"]
+    # Access user attributes directly from ORM object
+    stored_password = user.password
+    user_id = user.id
+    user_name = user.name
+    user_role = getattr(user, "role", request.role)
+    user_email = user.email
     
     # Verify password
     if not stored_password or not verify_password(request.password, stored_password):

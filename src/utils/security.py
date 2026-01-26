@@ -117,15 +117,22 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
     # decode token
     try:
+        logger.info(f"Attempting to decode token (first 10 chars): {token[:10]}...")
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
         role: str = payload.get("role")
+        logger.info(f"Token decoded successfully for user: {email}")
 
         #validate decoded email and role
         if email is None:
+            logger.warning("Token decoded but 'sub' (email) is missing")
             raise credentials_exception
         token_data = TokenData(email=email, role=role)
-    except JWTError:
+    except JWTError as e:
+        logger.warning(f"JWT decoding failed: {str(e)}")
+        raise credentials_exception
+    except Exception as e:
+        logger.error(f"Unexpected error during token validation: {str(e)}")
         raise credentials_exception
     
     # Optional: Verify user exists in database

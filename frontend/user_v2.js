@@ -14,9 +14,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     currentUser = JSON.parse(userStr);
 
-    // Update UI with user info
-    if (document.getElementById('user-name')) {
-        document.getElementById('user-name').innerText = currentUser.name;
+    console.log("SuperVibe User Portal Loaded");
+    console.log("Current User from LocalStorage:", currentUser);
+
+    if (!currentUser.access_token) {
+        console.error("EROROR: No access_token found in currentUser!");
+        showToast("Authentication token missing. Please log in again.", "error");
     }
 
     loadBranches();
@@ -33,7 +36,14 @@ async function loadBranches() {
     list.innerHTML = '<div class="spinner"></div>';
 
     try {
-        const res = await fetch(`${API_BASE}/branches/`);
+        console.log("Fetching branches with token:", currentUser.access_token ? "PRESENT" : "MISSING");
+        const res = await fetch(`${API_BASE}/branches/`, {
+            headers: {
+                'Authorization': 'Bearer ' + currentUser.access_token,
+                'X-Debug-Source': 'user.js'
+            }
+        });
+        console.log("Branch fetch response status:", res.status);
         const branches = await res.json();
 
         list.innerHTML = branches.map(b => `
@@ -60,7 +70,9 @@ async function loadProducts() {
     list.innerHTML = '<div class="spinner"></div>';
 
     try {
-        const res = await fetch(`${API_BASE}/products/`);
+        const res = await fetch(`${API_BASE}/products/`, {
+            headers: { 'Authorization': 'Bearer ' + currentUser.access_token }
+        });
         const products = await res.json();
 
         list.innerHTML = products.map(p => {
@@ -159,7 +171,10 @@ async function handleCheckout() {
     try {
         const res = await fetch(`${API_BASE}/transactions/`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + currentUser.access_token
+            },
             body: JSON.stringify(payload)
         });
 

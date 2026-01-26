@@ -264,7 +264,7 @@ class CustomerSignupRequest(SignupRequest):
 class EmployeeSignupRequest(SignupRequest):
     """Employee signup request model"""
     role: str = Field(..., description="Employee role (ADMIN, CASHIER, etc.)")
-    dateOfEmployment: str = Field(..., description="Date of employment (YYYY-MM-DD)")
+    dateOfEmployment: date = Field(..., description="Date of employment")
 
 # Login request model
 class LoginRequest(BaseModel):

@@ -17,6 +17,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            overflow-y: auto;
             background: radial-gradient(circle at top right, #1e1b4b, #020617);
             padding: 2rem 0;
         }
@@ -269,9 +270,23 @@
                     window.location.href = '/';
                 } else {
                     const data = await res.json();
-                    let msg = data.detail;
-                    if (Array.isArray(msg)) msg = msg[0].msg;
-                    errorEl.innerText = msg || 'Registration failed';
+                    let msg = '';
+
+                    if (data.detail) {
+                        if (Array.isArray(data.detail)) {
+                            // Extract field and message from Pydantic errors
+                            msg = data.detail.map(err => {
+                                const field = err.loc[err.loc.length - 1];
+                                return `${field}: ${err.msg}`;
+                            }).join('<br>');
+                        } else {
+                            msg = data.detail;
+                        }
+                    } else {
+                        msg = 'Registration failed. Please check your data.';
+                    }
+
+                    errorEl.innerHTML = msg;
                     errorEl.style.display = 'block';
                 }
             } catch (err) {
